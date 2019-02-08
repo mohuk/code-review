@@ -1,4 +1,4 @@
-module github.com/mohuk/go-github-issue-report
+module github.com/mohuk/code-review
 
 require (
 	github.com/davecgh/go-spew v1.1.1

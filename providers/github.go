@@ -5,14 +5,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/google/go-github/v22/github"
-	gittypes "github.com/mohuk/go-github-issue-report/types"
+	gittypes "github.com/mohuk/code-review/types"
 	"golang.org/x/oauth2"
 )
 
@@ -79,17 +78,13 @@ func (gr *GithubReview) CreateReviewPullRequest(base string, head string) (*gith
 }
 
 // CreateReviewBranch creates a branch for code review
-func (gr *GithubReview) CreateReviewBranch(name string, sha string) (*gittypes.GitBranch, error) {
-
-	if gr.branchExists(name) {
-		return nil, errors.New("Branch already exists")
-	}
+func (gr *GithubReview) CreateReviewBranch(base, name string) (*gittypes.GitBranch, error) {
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", gr.UserAccount, gr.Repository)
 
 	payload := GithubCreateBranchRequest{}
 	payload.Ref = fmt.Sprintf("refs/heads/%s", name)
-	payload.Sha = sha
+	payload.Sha = gr.getLastCommit(base).Sha
 	byt, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(byt))
 	token := base64.StdEncoding.EncodeToString([]byte(gr.AccessToken))
@@ -118,18 +113,31 @@ func (gr *GithubReview) CreateReviewBranch(name string, sha string) (*gittypes.G
 	return &gitBranch, err
 }
 
-func (gr *GithubReview) branchExists(branch string) bool {
+// BranchExists checks for existing branch
+func (gr *GithubReview) BranchExists(branch string) (bool, error) {
 	br, response, err := gr.Client.Repositories.GetBranch(ctx, gr.UserAccount, gr.Repository, branch)
 
 	if response.StatusCode == http.StatusNotFound {
-		return false
+		return false, nil
 	}
 
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	exists := branch == br.GetName()
 
-	return exists
+	return exists, nil
+}
+
+func (gr *GithubReview) getLastCommit(branch string) (*gittypes.GitCommit, error) {
+	commits, _, err := gr.Client.Repositories.ListCommits(ctx, gr.UserAccount, gr.Repository, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &gittypes.GitCommit{
+		Sha: *commits[len(commits)-1].SHA,
+	}, nil
 }

@@ -9,3 +9,8 @@ type GitBranch struct {
 type GitPullRequest struct {
 	ID int
 }
+
+// GitCommit struct
+type GitCommit struct {
+	Sha string
+}
