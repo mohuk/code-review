@@ -57,7 +57,13 @@ func main() {
 	switch task {
 	case "start-review":
 		{
-			if !provider.BranchExists(branch) {
+			br, err := provider.BranchExists(branch)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if !br {
 				_, err := provider.CreateReviewBranch(head, branch)
 
 				if err != nil {
@@ -70,7 +76,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			fmt.Printf("Pull request for review created at %s", *pr.)
+			fmt.Printf("Pull request for review created at %s", *pr.URL)
 		}
 	default:
 		{

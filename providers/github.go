@@ -84,7 +84,13 @@ func (gr *GithubReview) CreateReviewBranch(base, name string) (*gittypes.GitBran
 
 	payload := GithubCreateBranchRequest{}
 	payload.Ref = fmt.Sprintf("refs/heads/%s", name)
-	payload.Sha = gr.getLastCommit(base).Sha
+	commit, err := gr.getLastCommit(base)
+
+	if err != nil {
+		return nil, err
+	}
+
+	payload.Sha = commit.Sha
 	byt, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(byt))
 	token := base64.StdEncoding.EncodeToString([]byte(gr.AccessToken))
