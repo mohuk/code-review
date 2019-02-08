@@ -55,7 +55,7 @@ func main() {
 	provider.InitializeClient()
 
 	switch task {
-	case "start-review":
+	case "initiate":
 		{
 			br, err := provider.BranchExists(branch)
 
